@@ -1,0 +1,16 @@
+{"q": "What does Ansh do at Commercient?", "expect_url_contains": "#experience"}
+{"q": "How fast is Ansh's vLLM inference stack?", "expect_url_contains": "#experience"}
+{"q": "What is CareerMatch AI?", "expect_url_contains": "CareerMatch-AI"}
+{"q": "Tell me about the NLP Studio project", "expect_url_contains": "NLP-Studio"}
+{"q": "How does the smartphone price prediction project collect its data?", "expect_url_contains": "SmartPhone-Price-Intelligence"}
+{"q": "What model does JobFit use to analyze resumes?", "expect_url_contains": "JobFit_ATS_Resume_Parser"}
+{"q": "What did Ansh build with LSTM networks?", "expect_url_contains": "ContextFlow"}
+{"q": "Did Ansh ever build a chatbot inside an e-commerce store?", "expect_url_contains": "AthletiX-Hub"}
+{"q": "What is Ansh's CGPA and where did he study?", "expect_url_contains": "#credentials"}
+{"q": "Which certifications does Ansh have?", "expect_url_contains": "#credentials"}
+{"q": "What vector databases has Ansh worked with?", "expect_url_contains": "#skills"}
+{"q": "How can I contact Ansh?", "expect_url_contains": "#contact"}
+{"q": "Is Ansh open to new opportunities?", "expect_url_contains": "#contact"}
+{"q": "What does Ansh believe about AI engineering?", "expect_url_contains": "#about"}
+{"q": "What did Ansh do to reduce ticket triage effort?", "expect_url_contains": "#experience"}
+{"q": "Does Ansh know LangGraph?", "expect_url_contains": "#"}
