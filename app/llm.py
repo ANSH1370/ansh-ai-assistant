@@ -26,6 +26,10 @@ def chat(
     }
     if json_mode:
         payload["response_format"] = {"type": "json_object"}
+    # gpt-oss models reason before answering; for the cheap guard/rewrite steps
+    # low effort = faster, cheaper, and less likely to eat the token budget.
+    if "gpt-oss" in payload["model"] and payload["model"] == settings.fast_model:
+        payload["reasoning_effort"] = "low"
 
     with httpx.Client(timeout=30) as client:
         for attempt in (1, 2):
@@ -36,6 +40,8 @@ def chat(
             )
             if resp.status_code in (429, 500, 502, 503) and attempt == 1:
                 continue  # one retry on transient failures
-            resp.raise_for_status()
+            if resp.status_code >= 400:
+                # surface Groq's error body — it names the actual problem
+                raise RuntimeError(f"Groq error {resp.status_code}: {resp.text[:300]}")
             return resp.json()["choices"][0]["message"]["content"]
     raise RuntimeError("unreachable")

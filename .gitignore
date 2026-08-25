@@ -6,3 +6,4 @@ venv/
 qdrant_local/
 .pytest_cache/
 .DS_Store
+myenv/

@@ -37,7 +37,9 @@ def guard(state: ChatState) -> ChatState:
             ],
             model=settings.fast_model,
             json_mode=True,
-            max_tokens=20,
+            # generous budget: reasoning models (gpt-oss) spend tokens thinking
+            # before emitting the JSON; 20 tokens starved them into empty output
+            max_tokens=200,
             temperature=0.0,
         )
         on_topic = bool(json.loads(raw).get("on_topic", False))
@@ -56,22 +58,31 @@ def rewrite(state: ChatState) -> ChatState:
         return {"standalone": state["question"]}
     convo = "\n".join(f'{m["role"]}: {m["content"]}' for m in state["history"][-6:])
     try:
-        standalone = chat(
+        raw = chat(
             [
                 {"role": "system", "content": prompts.REWRITE_PROMPT},
                 {"role": "user", "content": f"Conversation:\n{convo}\n\nLatest message: {state['question']}"},
             ],
             model=settings.fast_model,
-            max_tokens=60,
+            # generous budget: reasoning models (gpt-oss) spend tokens thinking
+            # before emitting the query; a tight cap truncates the actual output
+            max_tokens=250,
             temperature=0.0,
         ).strip()
+        # Keep the last non-empty line, stripped of quotes — survives models
+        # that wrap the query in preamble prose.
+        lines = [ln.strip().strip('"').strip() for ln in raw.splitlines() if ln.strip()]
+        standalone = lines[-1] if lines else ""
     except Exception:
         standalone = state["question"]
+    print(f"[graph] rewrite: {state['question']!r} -> {standalone!r}")
     return {"standalone": standalone or state["question"]}
 
 
 def retrieve(state: ChatState) -> ChatState:
-    return {"hits": search(state["standalone"])}
+    hits = search(state["standalone"])
+    print(f"[graph] top hits: {[f'{h.title} :: {h.section}' for h in hits[:3]]}")
+    return {"hits": hits}
 
 
 def generate(state: ChatState) -> ChatState:
@@ -90,10 +101,11 @@ def generate(state: ChatState) -> ChatState:
     )
 
     # Citations = the context blocks the model actually referenced.
-    cited_idx = {int(n) - 1 for n in re.findall(r"\[(\d+)\]", answer)}
+    # gpt-oss models often emit 【n†L1-L3】-style markers instead of plain [n].
+    cited_idx = {int(n) - 1 for n in re.findall(r"[\[【](\d+)(?:†[^\]】]*)?[\]】]", answer)}
     cited = [hits[i] for i in sorted(cited_idx) if 0 <= i < len(hits)]
-    if not cited and hits:
-        cited = hits[:2]  # model answered without markers — surface top sources
+    # No markers = the model didn't ground the answer in a source (usually a
+    # can't-help reply) — attaching citations anyway would be misleading.
 
     seen, citations = set(), []
     for h in cited:
