@@ -7,6 +7,7 @@ instance; swap for Redis if this ever scales past one.)
 
 import time
 from collections import defaultdict, deque
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,8 +15,23 @@ from pydantic import BaseModel, Field
 
 from app.config import settings
 from app.graph import pipeline
+from app.retrieval import warm
 
-app = FastAPI(title="ansh-ai-assistant", docs_url=None, redoc_url=None)
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    # Load the embedding model + open Qdrant before the port opens, so the
+    # first real question after a cold start is as fast as every other one.
+    t0 = time.time()
+    try:
+        warm()
+        print(f"[startup] retrieval warm in {time.time() - t0:.1f}s")
+    except Exception as exc:  # never block boot — the first /chat will retry lazily
+        print(f"[startup] retrieval warmup FAILED: {exc}")
+    yield
+
+
+app = FastAPI(title="ansh-ai-assistant", docs_url=None, redoc_url=None, lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

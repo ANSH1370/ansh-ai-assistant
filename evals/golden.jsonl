@@ -14,3 +14,6 @@
 {"q": "What does Ansh believe about AI engineering?", "expect_url_contains": "#about"}
 {"q": "What did Ansh do to reduce ticket triage effort?", "expect_url_contains": "#experience"}
 {"q": "Does Ansh know LangGraph?", "expect_url_contains": "#"}
+{"q": "How was this chatbot built?", "expect_url_contains": "ansh-ai-assistant"}
+{"q": "What technology stack does this assistant use?", "expect_url_contains": "ansh-ai-assistant"}
+{"q": "Can Ansh build a chatbot like this for my business?", "expect_url_contains": "#contact"}

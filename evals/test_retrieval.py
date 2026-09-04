@@ -48,7 +48,7 @@ def store(tmp_path_factory):
         )
     assert chunks, "corpus produced no chunks"
 
-    embedder = TextEmbedding(settings.embed_model)
+    embedder = TextEmbedding(settings.embed_model, cache_dir=settings.embed_cache_dir)
     vectors = list(embedder.embed([c.text for c in chunks]))
 
     client = QdrantClient(path=str(tmp_path_factory.mktemp("qdrant")))

@@ -72,6 +72,24 @@ or chunking — don't paper over it in the prompt.
 5. Run ingestion against Qdrant Cloud once locally (set `QDRANT_URL` in `.env`,
    run `python -m ingest.ingest`) — or let the build command do it on each deploy.
 
+### Cold starts (free tier)
+
+Render's free instance sleeps after 15 min idle and takes ~30-50 s to wake.
+Three layers keep the first answer fast and real:
+
+- **Startup warm-up** — the FastAPI lifespan hook loads the embedding model and
+  opens the Qdrant connection *before* the port opens, so the first `/chat`
+  costs the same as any other.
+- **Model cache in the project dir** — `EMBED_CACHE_DIR` defaults to
+  `.fastembed_cache/`, so the model downloaded by `ingest` at build time is
+  still there at runtime (the default `/tmp` cache is not).
+- **Keep-alive ping** — `.github/workflows/keepalive.yml` hits the portfolio's
+  warmup route every 10 min (free on a public repo). Any external pinger
+  (cron-job.org, UptimeRobot) works the same way.
+
+The portfolio side warms the backend on page load and waits up to 50 s for
+the RAG answer before falling back to its FAQ mode.
+
 ## Updating the knowledge base
 
 Edit `corpus/*.md` → run `python -m ingest.ingest` → done. Frontmatter `url`

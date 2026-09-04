@@ -21,7 +21,7 @@ class Hit:
 @lru_cache(maxsize=1)
 def _embedder() -> TextEmbedding:
     # Loaded once per process; ~30MB ONNX model, no GPU needed.
-    return TextEmbedding(settings.embed_model)
+    return TextEmbedding(settings.embed_model, cache_dir=settings.embed_cache_dir)
 
 
 @lru_cache(maxsize=1)
@@ -51,3 +51,19 @@ def search(query: str, top_k: int | None = None) -> list[Hit]:
         )
         for p in res.points
     ]
+
+
+def warm() -> None:
+    """Load the embedder and open the vector store before serving traffic.
+
+    Called from the FastAPI lifespan hook. Without this, the first question
+    after a cold start pays model loading + connection setup on top of the
+    LLM calls and blows the portfolio's request timeout, so visitors get a
+    fallback answer instead of the real RAG one.
+    """
+    _embedder()
+    _client()
+    try:
+        search("warmup", top_k=1)
+    except Exception as exc:  # e.g. collection not ingested yet — don't block boot
+        print(f"[retrieval] warmup search skipped: {exc}")

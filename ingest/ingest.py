@@ -46,7 +46,7 @@ def main() -> None:
     print(f"Loaded {len(files)} files → {len(chunks)} chunks")
 
     print(f"Embedding with {settings.embed_model} ...")
-    embedder = TextEmbedding(settings.embed_model)
+    embedder = TextEmbedding(settings.embed_model, cache_dir=settings.embed_cache_dir)
     vectors = list(embedder.embed([c.text for c in chunks]))
     dim = len(vectors[0])
 

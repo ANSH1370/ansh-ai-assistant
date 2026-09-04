@@ -17,6 +17,10 @@ class Settings(BaseSettings):
 
     # Embeddings — bge-small via fastembed (ONNX, no torch: fits small servers)
     embed_model: str = "BAAI/bge-small-en-v1.5"
+    # Model cache inside the project dir (not /tmp) so the download done at
+    # build time (ingest) is still there at runtime — otherwise every cold
+    # start re-downloads the model before it can answer its first question.
+    embed_cache_dir: str = ".fastembed_cache"
 
     # Retrieval
     top_k: int = 6
