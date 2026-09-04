@@ -1,0 +1,12 @@
+{"q": "How long does probate take in Texas?", "expect_url_contains": "timeline-of-completion"}
+{"q": "Can probate be avoided in Texas?", "expect_url_contains": "can-probate-be-avoided"}
+{"q": "What is a muniment of title?", "expect_url_contains": "muniment-of-title"}
+{"q": "What happens if someone dies without a will?", "expect_url_contains": "probate-without-a-will"}
+{"q": "As a landlord, how do I give a tenant notice to vacate?", "expect_url_contains": "notice-to-vacate"}
+{"q": "What is a writ of possession?", "expect_url_contains": "writ-possession"}
+{"q": "Do joint bank accounts go through probate?", "expect_url_contains": "joint-account"}
+{"q": "What can someone do with a power of attorney?", "expect_url_contains": "power-of-attorney"}
+{"q": "How do I contact the firm or book a consultation?", "expect_url_contains": "contact-us"}
+{"q": "Who is Richard Cahan and what is his background?", "expect_url_contains": "attorney-profile"}
+{"q": "How can a will be contested in Texas?", "expect_url_contains": "will-contest"}
+{"q": "What are common mistakes families make during probate?", "expect_url_contains": "common-mistakes-families"}

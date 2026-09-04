@@ -1,0 +1,22 @@
+{
+  "slug": "cahanlaw",
+  "name": "Law Office of Richard Cahan",
+  "short_name": "the Law Office of Richard Cahan",
+  "site": "https://www.cahanlaw.com",
+  "industry": "law",
+  "description": "a probate, estate planning and landlord-tenant (eviction) law firm in Round Rock, Texas, serving Pflugerville, Austin and Central Texas",
+  "languages": [
+    "en"
+  ],
+  "accent": "#7c3aed",
+  "contact": "richard@cahanlaw.com, a text to (512) 843-8955, or the Calendly booking link on cahanlaw.com (most consultations are free)",
+  "lead_email": "",
+  "starters": [
+    "How does probate work in Texas?",
+    "Can probate be avoided?",
+    "I'm a landlord — how do I evict a tenant in Travis County?",
+    "How do I contact Richard?"
+  ],
+  "welcome": "Hi — I'm the AI assistant for the Law Office of Richard Cahan. I answer from the firm's website (probate, estate planning, landlord-tenant) and can help you get in touch. General information only, not legal advice.",
+  "disclaimer": "This assistant answers from the Law Office of Richard Cahan's published website content. It provides general information only — not legal advice — and does not create an attorney-client relationship. For advice on your situation, contact the firm."
+}

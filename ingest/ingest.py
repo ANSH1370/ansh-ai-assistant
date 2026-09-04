@@ -12,6 +12,7 @@ tenant (`demo_<slug>`), so ingesting a demo never touches the portfolio's
 """
 
 import argparse
+import gc
 import sys
 import uuid
 from pathlib import Path
@@ -114,8 +115,19 @@ def main(argv: list[str] | None = None) -> None:
     print(f"Embedding with {settings.embed_model} ...")
     embedder = TextEmbedding(settings.embed_model, cache_dir=settings.embed_cache_dir)
     client = get_client()
-    for t in targets:
-        ingest(t, client=client, embedder=embedder)
+    try:
+        for t in targets:
+            ingest(t, client=client, embedder=embedder)
+    finally:
+        # Release the ONNX runtime + local store explicitly: tearing them down
+        # during interpreter shutdown crashes on macOS ("recursive_mutex lock
+        # failed") even though all the work above completed.
+        try:
+            client.close()
+        except Exception:
+            pass
+        del embedder
+        gc.collect()
 
 
 if __name__ == "__main__":
