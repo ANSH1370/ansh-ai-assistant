@@ -31,12 +31,12 @@ def _client() -> QdrantClient:
     return QdrantClient(path=settings.qdrant_local_path)
 
 
-def search(query: str, top_k: int | None = None) -> list[Hit]:
+def search(query: str, top_k: int | None = None, collection: str | None = None) -> list[Hit]:
     # query_embed applies BGE's query-side instruction prefix — passages and
     # queries are embedded differently on purpose (that's how BGE was trained).
     vector = list(_embedder().query_embed(query))[0]
     res = _client().query_points(
-        collection_name=settings.collection,
+        collection_name=collection or settings.collection,
         query=vector.tolist(),
         limit=top_k or settings.top_k,
         with_payload=True,

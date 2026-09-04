@@ -90,6 +90,12 @@ Three layers keep the first answer fast and real:
 The portfolio side warms the backend on page load and waits up to 50 s for
 the RAG answer before falling back to its FAQ mode.
 
+## Demo assistants for prospects
+
+One prospect = one tenant folder + one isolated Qdrant collection, served at
+`/demo/<slug>` on the portfolio. Crawl → review → ingest → link. Full runbook:
+[DEMOS.md](DEMOS.md).
+
 ## Updating the knowledge base
 
 Edit `corpus/*.md` → run `python -m ingest.ingest` → done. Frontmatter `url`
@@ -99,4 +105,7 @@ is what citations link to; keep it accurate.
 
 `POST /chat` → `{"messages": [{"role": "user|assistant", "content": "..."}]}`
 returns `{"answer": str, "citations": [{"title": str, "url": str}]}`.
+
+`GET /demo/{slug}` → public tenant config · `POST /demo/{slug}/chat` → same shape as
+`/chat`, against that tenant's collection and prompts (see DEMOS.md).
 Rate limit: 20 req/min/IP. CORS: portfolio domains only.

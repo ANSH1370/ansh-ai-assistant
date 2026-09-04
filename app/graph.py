@@ -14,9 +14,11 @@ from app import prompts
 from app.config import settings
 from app.llm import chat
 from app.retrieval import Hit, search
+from app.tenants import Tenant, get_tenant
 
 
 class ChatState(TypedDict, total=False):
+    tenant: str              # slug; missing/"ansh" = the portfolio assistant
     history: list[dict]      # [{role, content}] — prior turns, user/assistant only
     question: str            # latest user message
     on_topic: bool
@@ -26,13 +28,47 @@ class ChatState(TypedDict, total=False):
     citations: list[dict]    # [{title, url}]
 
 
+# ── per-tenant prompt selection ──────────────────────────────────────────
+
+def _tenant(state: ChatState) -> Tenant:
+    t = get_tenant(state.get("tenant"))
+    if t is None:
+        raise ValueError(f"unknown tenant: {state.get('tenant')!r}")
+    return t
+
+
+def _fmt(template: str, t: Tenant) -> str:
+    return template.format(
+        name=t.name, short_name=t.short_name, description=t.description,
+        contact=t.contact or f"the contact page on {t.site}",
+    )
+
+
+def _prompts(t: Tenant) -> dict[str, str]:
+    if t.is_default:
+        return {
+            "guard": prompts.GUARD_PROMPT,
+            "rewrite": prompts.REWRITE_PROMPT,
+            "answer": prompts.ANSWER_PROMPT,
+            "refusal": prompts.REFUSAL_MESSAGE,
+        }
+    # ANSWER template keeps its {context} slot for generate(); escape it here.
+    answer = _fmt(prompts.TENANT_ANSWER_PROMPT.replace("{context}", "{{context}}"), t)
+    return {
+        "guard": _fmt(prompts.TENANT_GUARD_PROMPT, t),
+        "rewrite": _fmt(prompts.TENANT_REWRITE_PROMPT, t),
+        "answer": answer,
+        "refusal": _fmt(prompts.TENANT_REFUSAL_MESSAGE, t),
+    }
+
+
 # ── nodes ────────────────────────────────────────────────────────────────
 
 def guard(state: ChatState) -> ChatState:
     try:
         raw = chat(
             [
-                {"role": "system", "content": prompts.GUARD_PROMPT},
+                {"role": "system", "content": _prompts(_tenant(state))["guard"]},
                 {"role": "user", "content": state["question"][:1000]},
             ],
             model=settings.fast_model,
@@ -49,18 +85,20 @@ def guard(state: ChatState) -> ChatState:
 
 
 def refuse(state: ChatState) -> ChatState:
-    return {"answer": prompts.REFUSAL_MESSAGE, "citations": []}
+    return {"answer": _prompts(_tenant(state))["refusal"], "citations": []}
 
 
 def rewrite(state: ChatState) -> ChatState:
+    t = _tenant(state)
     # No history → the question is already standalone; skip one LLM call.
-    if not state.get("history"):
+    # (Multilingual tenants still go through the LLM so the search query is English.)
+    if not state.get("history") and not t.multilingual:
         return {"standalone": state["question"]}
     convo = "\n".join(f'{m["role"]}: {m["content"]}' for m in state["history"][-6:])
     try:
         raw = chat(
             [
-                {"role": "system", "content": prompts.REWRITE_PROMPT},
+                {"role": "system", "content": _prompts(t)["rewrite"]},
                 {"role": "user", "content": f"Conversation:\n{convo}\n\nLatest message: {state['question']}"},
             ],
             model=settings.fast_model,
@@ -80,7 +118,7 @@ def rewrite(state: ChatState) -> ChatState:
 
 
 def retrieve(state: ChatState) -> ChatState:
-    hits = search(state["standalone"])
+    hits = search(state["standalone"], collection=_tenant(state).collection)
     print(f"[graph] top hits: {[f'{h.title} :: {h.section}' for h in hits[:3]]}")
     return {"hits": hits}
 
@@ -92,7 +130,7 @@ def generate(state: ChatState) -> ChatState:
     )
     answer = chat(
         [
-            {"role": "system", "content": prompts.ANSWER_PROMPT.format(context=context)},
+            {"role": "system", "content": _prompts(_tenant(state))["answer"].format(context=context)},
             *state.get("history", [])[-4:],
             {"role": "user", "content": state["question"]},
         ],

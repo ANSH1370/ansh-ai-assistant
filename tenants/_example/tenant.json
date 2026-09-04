@@ -1,0 +1,20 @@
+{
+  "slug": "_example",
+  "name": "Law Office of Jane Example",
+  "short_name": "Example Law",
+  "site": "https://www.example-law.com",
+  "industry": "law",
+  "description": "estate planning and probate law in Austin, Texas",
+  "languages": ["en"],
+  "accent": "#7c3aed",
+  "contact": "the contact page at https://www.example-law.com/contact/ or (512) 000-0000",
+  "lead_email": "",
+  "starters": [
+    "What does the firm help with?",
+    "How much is a consultation?",
+    "What should I bring to a first meeting?",
+    "How do I get in touch?"
+  ],
+  "welcome": "Hi — I'm the AI assistant for the Law Office of Jane Example. I answer from the firm's website and can help you get in touch. This is general information, not legal advice.",
+  "disclaimer": "This assistant answers from the firm's published website content. It provides general information only — not legal advice — and does not create an attorney-client relationship."
+}

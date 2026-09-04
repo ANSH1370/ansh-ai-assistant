@@ -16,6 +16,7 @@ from pydantic import BaseModel, Field
 from app.config import settings
 from app.graph import pipeline
 from app.retrieval import warm
+from app.tenants import get_tenant
 
 
 @asynccontextmanager
@@ -73,8 +74,7 @@ def health() -> dict:
     return {"ok": True}
 
 
-@app.post("/chat", response_model=ChatResponse)
-def chat_endpoint(req: ChatRequest, request: Request) -> ChatResponse:
+def _run(req: ChatRequest, request: Request, tenant: str = "ansh") -> ChatResponse:
     ip = request.headers.get("x-forwarded-for", request.client.host or "?").split(",")[0]
     if _rate_limited(ip):
         raise HTTPException(429, "Too many requests — try again in a minute.")
@@ -84,5 +84,29 @@ def chat_endpoint(req: ChatRequest, request: Request) -> ChatResponse:
         raise HTTPException(400, "No user message found.")
     history = [m.model_dump() for m in req.messages[:-1]]
 
-    state = pipeline.invoke({"question": last_user.content, "history": history})
+    state = pipeline.invoke({"tenant": tenant, "question": last_user.content, "history": history})
     return ChatResponse(answer=state["answer"], citations=state.get("citations", []))
+
+
+@app.post("/chat", response_model=ChatResponse)
+def chat_endpoint(req: ChatRequest, request: Request) -> ChatResponse:
+    """The portfolio assistant (default tenant) — unchanged behaviour."""
+    return _run(req, request)
+
+
+# ── Demo / client tenants: same pipeline, isolated collection + prompts ──
+
+@app.get("/demo/{slug}")
+def demo_info(slug: str) -> dict:
+    t = get_tenant(slug)
+    if t is None or t.is_default:
+        raise HTTPException(404, "Unknown demo.")
+    return t.public()
+
+
+@app.post("/demo/{slug}/chat", response_model=ChatResponse)
+def demo_chat(slug: str, req: ChatRequest, request: Request) -> ChatResponse:
+    t = get_tenant(slug)
+    if t is None or t.is_default:
+        raise HTTPException(404, "Unknown demo.")
+    return _run(req, request, tenant=t.slug)
