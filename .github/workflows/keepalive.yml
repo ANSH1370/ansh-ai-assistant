@@ -1,8 +1,14 @@
 # Keeps the Render free-tier instance from sleeping (it spins down after
 # 15 min idle and takes 30-50 s to wake — long enough for a visitor's first
-# question to time out). Pings the portfolio's warmup route, which pings
-# this backend's /health. Free on a public repo; on a private repo it
-# consumes GitHub Actions minutes, so use cron-job.org / UptimeRobot instead.
+# question to time out, and long enough for /demo/<slug> to fall back to its
+# committed snapshot). Pings the portfolio's warmup route, which holds the
+# connection open while the backend boots.
+#
+# GitHub delays and drops scheduled runs on busy shared runners — this has
+# missed enough 10-minute slots to let the instance sleep. Treat it as a
+# best-effort backup and keep an external pinger (cron-job.org / UptimeRobot,
+# both free) hitting https://anshmangukiya.vercel.app/api/chat every 10 min as
+# the primary. See DEMOS.md.
 name: keepalive
 on:
   schedule:
@@ -11,6 +17,8 @@ on:
 jobs:
   ping:
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 3
     steps:
-      - run: curl -sS -m 30 -o /dev/null -w "warmup HTTP %{http_code} in %{time_total}s\n" https://anshmangukiya.vercel.app/api/chat || true
+      # -m 70 so curl outlives a cold start instead of hanging up at 30 s and
+      # killing the wake-up request mid-boot.
+      - run: curl -sS -m 70 -o /dev/null -w "warmup HTTP %{http_code} in %{time_total}s\n" https://anshmangukiya.vercel.app/api/chat || true

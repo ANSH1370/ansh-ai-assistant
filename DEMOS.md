@@ -35,6 +35,22 @@ python -m ingest.ingest --tenant cahanlaw
 git add tenants/cahanlaw && git commit -m "demo: cahanlaw" && git push
 ```
 
+## Keeping a demo link clickable (do this before you send the link to anyone)
+
+The Render free tier sleeps after 15 min idle and takes 30-50 s to wake. Two
+guards, both required:
+
+1. **Snapshot the tenant into the portfolio repo.** Copy the public fields of
+   `tenants/<slug>/tenant.json` into `portfolio/lib/demo-tenants.ts`. Without
+   it, `/demo/<slug>` returns **404** whenever the backend is asleep — which is
+   exactly when a prospect clicks the link in a cold email.
+2. **Keep an external pinger running.** cron-job.org or UptimeRobot (free),
+   every 10 min, GET `https://anshmangukiya.vercel.app/api/chat`. The GitHub
+   Action does the same thing but GitHub drops scheduled runs under load, so it
+   is the backup, not the plan.
+
+Check both by opening the demo link after the site has been idle for 20 minutes.
+
 ## What the tenant assistant does differently
 
 - **Isolation:** `retrieve` searches `demo_<slug>` only; prompts are templated from
